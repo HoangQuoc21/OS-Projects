@@ -63,4 +63,5 @@ def list_files(startpath):
         # break
 
 if __name__ == "__main__":
-    list_files("your absolute address")
+    absolutePath = input('Enter absolute path: ');
+    list_files(absolutePath)
