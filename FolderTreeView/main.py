@@ -62,4 +62,5 @@ def list_files(startpath):
                 break #Enter right name
         # break
 
-list_files("E:\VSCode\WebDevelopment\Week05")
+if __name__ == "__main__":
+    list_files("your absolute address")
