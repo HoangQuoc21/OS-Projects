@@ -39,3 +39,9 @@ def read_ntfs_volume(volume_path):
     print(mft_start_cluster)
         # Return the MFT and other volume information
     #return mft, bytes_per_sector, sectors_per_cluster, reserved_sectors, total_sectors
+
+def main():
+    fd = os.open(r'\\.\D:', os.O_RDONLY | os.O_BINARY)
+    f = os.fdopen(fd, mode='rb')
+    read_ntfs_volume(f.name)
+main()
