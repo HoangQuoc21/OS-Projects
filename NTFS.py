@@ -44,4 +44,5 @@ def main():
     fd = os.open(r'\\.\D:', os.O_RDONLY | os.O_BINARY)
     f = os.fdopen(fd, mode='rb')
     read_ntfs_volume(f.name)
+    
 main()
