@@ -1,3 +1,4 @@
+# import thư viện os để xóa màn hình
 import os
 
 # hàm main: 
