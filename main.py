@@ -1,10 +1,22 @@
-# import thư viện os để xóa màn hình
-import os
+from general import *
+from GetVolType import *
+from directoriesFAT32 import main_FAT32
 
-# hàm main: 
-if __name__ == "__main__":
-    # xóa màn hình
-    os.system("cls");
-    
-    # in ra màn hình dòng chữ "Hello World!"
-    print("Hello World!");
+platform_name = init_platform()
+volume = input('Type your disk path: ')
+rs = get_volume_type(volume)
+
+# Chọn đúng đường dẫn ổ đĩa dựa trên hệ điều hành
+disk_path = select_disk_path(platform_name, volume)
+
+# Tạo một tệp để mở ổ đĩa và đọc nội dung
+disk_file = generate_disk_file(disk_path)
+
+def print_hexa(data):
+    print(' '.join('{:02X}'.format(b) for b in data))
+
+if rs == 'FAT32':
+    main_FAT32(volume, disk_file)
+else:
+    data = disk_file.read(10000)
+    print_hexa(data)
