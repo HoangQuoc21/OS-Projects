@@ -121,7 +121,6 @@ def handle_file(disk_file, file_info, info):
             print(f"The file {file_name} is not supported in this program")            
 
 def main_FAT32(volume, disk_file):
-    
 
     # Biến lưu trữ đường dẫn thư mục hiện tại
     current_path = [volume + ':\\']

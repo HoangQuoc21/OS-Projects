@@ -17,6 +17,7 @@ def print_hexa(data):
 
 if rs == 'FAT32':
     main_FAT32(volume, disk_file)
-else:
+elif rs == 'NTFS':
+    #in kết quả thử
     data = disk_file.read(10000)
     print_hexa(data)
