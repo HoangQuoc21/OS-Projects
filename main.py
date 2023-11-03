@@ -1,6 +1,7 @@
 from FAT32.general import *
 from FAT32.directoriesFAT32 import main_FAT32
 from GetVolType import *
+from NTFS.NTFS import *
 
 try:
     platform_name = init_platform()
@@ -22,6 +23,7 @@ try:
         #in kết quả thử
         data = disk_file.read(10000)
         print_hexa(data)
+        #khi có các hàm xử lý cho NTFS thì xóa 2 dòng trên đi và ghi lại các hàm xử lý NTFS vào
         
 except FileNotFoundError:
     print("Unknown volume type or Unfound volume!")
