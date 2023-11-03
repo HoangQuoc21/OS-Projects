@@ -21,3 +21,5 @@ elif rs == 'NTFS':
     #in kết quả thử
     data = disk_file.read(10000)
     print_hexa(data)
+else:
+    print("Unknown volume type or Unfound volume!")
