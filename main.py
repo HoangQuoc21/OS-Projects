@@ -1,6 +1,6 @@
-from general import *
+from FAT32.general import *
+from FAT32.directoriesFAT32 import main_FAT32
 from GetVolType import *
-from directoriesFAT32 import main_FAT32
 
 platform_name = init_platform()
 volume = input('Type your disk path: ')
