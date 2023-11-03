@@ -1,5 +1,5 @@
 import os
-from constant_FAT32 import *
+from FAT32.constant_FAT32 import *
 import struct
 from tabulate import tabulate
 
