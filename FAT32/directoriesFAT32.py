@@ -3,15 +3,6 @@ from FAT32.constant_FAT32 import *
 import struct
 from tabulate import tabulate
 
-def init_platform():
-    platform_name = os.name
-    return platform_name
-
-def select_disk_path(platform_name, disk_path):
-    if platform_name == 'nt':
-        return f'\\\\.\\{disk_path}:'
-    return disk_path
-
 def get_file_attributes(hex_code):
     # Định nghĩa các thuộc tính
     attributes = {
@@ -28,27 +19,46 @@ def get_file_attributes(hex_code):
     # Trả về danh sách các thuộc tính tương ứng
     return [attr for code, attr in attributes.items() if (hex_code >> code) & 1]
 
-def generate_disk_file(disk_path):
-    disk_file = os.open(disk_path, os.O_BINARY)
-    return os.fdopen(disk_file, 'rb')
-
+#data: đọc dữ liệu từ file nhị phân (Data), bắt đầu từ [offset], và lưu kết quả theo [format_string]
 def read_value_from_offset(data, offset, format_string):
-    return struct.unpack_from(format_string, data, offset)[0]
+    """
+    Một số format_string được sử dụng trong bài này:
+    '<': sử dụng thứ tự little endian, 
+    'H': unsigned short, 2 byte; 
+    'B': unsigned char, 1 byte; 
+    'I': unsigned int, 4 byte
+    """
+    return struct.unpack_from(format_string, data, offset)[0] #trả về một tuple ([number],)
 
+#Hàm đọc các giá trị của bootsector từ dãy nhị phân
 def read_boot_sector_values(data):
+    """
+    data: chuỗi 512 byte đầu đọc được từ ổ đĩa
+    
+    return: dictionary với key là tên thông tin, value là giá trị khớp thông tin đó
+    """
     values = {}
     values["FAT Type"] = data[BS_FAT_TYPE:BS_FAT_TYPE+5].decode('ascii')
-    values["Sector Size"] = read_value_from_offset(data, BS_SECTOR_SIZE, '<H')
-    values["Sectors per Cluster"] = read_value_from_offset(data, BS_SECTOR_CLUSTER, '<B')
+    values["Sector Size"] = read_value_from_offset(data, BS_SECTOR_SIZE, '<H') #Số byte/sector
+    values["Sectors per Cluster"] = read_value_from_offset(data, BS_SECTOR_CLUSTER, '<B') #<B
     values["Reserved Boot Sectors"] = read_value_from_offset(data, BS_SECTOR_BOOT, '<H')
     values["Number of FATs"] = read_value_from_offset(data, BS_FAT, '<B')
-    values["Total Sectors"] = read_value_from_offset(data, BS_TOTAL_SECTOR, '<I')
-    values["Sectors per FAT"] = read_value_from_offset(data, BS_SECTOR_FAT, '<I')
+    values["Total Sectors"] = read_value_from_offset(data, BS_TOTAL_SECTOR, '<I') 
+    values["Sectors per FAT"] = read_value_from_offset(data, BS_SECTOR_FAT, '<I') 
     values["Root Directory Cluster Start"] = read_value_from_offset(data, BS_RDET_CLUSTER_STARTED, '<I')
 
     return values
 
+#Hàm in chuỗi các entry ra
 def print_directory_entry(disk_file, info, start_pos, is_sdet=False):
+    """
+    disk_file: nội dung của ổ đĩa dưới dạng file nhị phân
+    info: dictionary chứa thông tin bootsector
+    start_pos: vị trí bắt đầu đọc các entry
+    is_sdet: các entry này nằm trong bảng rDET hay SDET, nêu slaf SDET sẽ bỏ qua 64 byte đầu
+    
+    return: dictionary chứa thông tin của tất cả các file xuất hiện trong chuỗi entry này
+    """
     directories = []
     # Chuyển tới vị trí bắt đầu
     disk_file.seek(start_pos)
@@ -65,7 +75,7 @@ def print_directory_entry(disk_file, info, start_pos, is_sdet=False):
     sub_entry_stack = []
 
     table_data = []
-    while data[0] != 0x00:
+    while data[0] != 0x00: #Chạy tới khi nào không gặp entry trống
         # Nếu là entry phụ (0F)
         if data[0xB] == 0x0F:
             # Rút tên từ các vị trí đã nói trước ra tới khi đủ số byte hoặc găp FF
@@ -75,15 +85,19 @@ def print_directory_entry(disk_file, info, start_pos, is_sdet=False):
 
             sub_entry_stack.append(name_part_a + name_part_b + name_part_c)
         else:
-            # Nếu byte đầu là E5 (đã xoá) hoặc 00 (entry trống) thì bỏ qua
-            if data[0] != 0x00 and data[0] != 0xE5: #and (data[ME_STATE] == 0x10 or data[ME_STATE] == 0x20):
-
+            # Nếu byte đầu là E5 (đã xoá) thì bỏ qua
+            if data[0] != 0xE5: #and (data[ME_STATE] == 0x10 or data[ME_STATE] == 0x20):
+                
+                #Nếu sub_entry_stack trống thì lấy tên file + tên mở rộng, nêu skhoong thì lấy các tên trong stck gép lại
                 file_name = ''.join(reversed(sub_entry_stack)) if sub_entry_stack else data[ME_MAIN_NAME:ME_MAIN_NAME+8].decode('ascii').rstrip() + "." + data[ME_EXPAND_NAME:ME_EXPAND_NAME+3].decode('ascii').rstrip()
+                
                 file_attributes = get_file_attributes(data[ME_STATE])
+                
                 cluster_number = struct.unpack_from('<H', data, ME_LOW_WORD)[0] + (struct.unpack_from('<H', data, ME_HIGH_WORD)[0] << 16)
                 file_size = struct.unpack_from('<I', data, ME_CONTENT_SIZE)[0]
+                
                 sector_number = start_pos // info["Sector Size"] + cluster_number - 2 * info["Sectors per Cluster"]
-
+                
                 table_data.append([file_name, file_attributes, cluster_number, sector_number])
 
                 directories.append({
@@ -127,8 +141,8 @@ def main_FAT32(volume,disk_file):
     current_path = [volume + ':\\']
 
     # Đọc thông tin từ phần khởi đầu (boot sector) của ổ đĩa
-    data = disk_file.read(512)
-    info = read_boot_sector_values(data)
+    data_first512byte = disk_file.read(512)
+    info = read_boot_sector_values(data_first512byte)
 
     # Tính vị trí bắt đầu của phân mục gốc (Root Directory Entry Table - RDET)
     rdet_start = (info["Reserved Boot Sectors"] + info["Number of FATs"] * info["Sectors per FAT"]) * info["Sector Size"]

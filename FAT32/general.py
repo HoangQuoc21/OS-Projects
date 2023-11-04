@@ -1,8 +1,14 @@
 import os
 
 def init_platform():
-    platform_name = os.name
-    return platform_name
+    platformName = os.name
+    if platformName == 'nt':
+            print('=============== You are running on NT WINDOWS ===============')
+    elif platformName == 'posix':
+        print('================= You are running on posix =================')
+    else:
+        raise Exception(f'We are not implement in {platformName} platform')
+    return platformName
 
 def select_disk_path(platform_name, disk_path):
     if platform_name == 'nt':

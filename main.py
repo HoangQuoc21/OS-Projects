@@ -18,7 +18,7 @@ def print_hexa(data):
 try:
     platform_name = init_platform()
     volume = input('Type your disk path: ')
-    rs = get_volume_type(volume)
+    rs = get_volume_type(volume) #Lưu chuỗi trả về "NTFS" hoặc "FAT32"
 
     # Chọn đúng đường dẫn ổ đĩa dựa trên hệ điều hành
     disk_path = select_disk_path(platform_name, volume)
