@@ -49,8 +49,48 @@ def read_boot_sector_values(data):
 
     return values
 
+
+def read_cluster_chain(fat_table_buffer, n): 
+    """
+    Hàm dò bảng FAT để tìm ra dãy các cluster cho một entry nhất định, bắt đầu từ cluster thứ `n` truyền vào.
+    """
+    # End-of-cluster sign
+    eoc_sign = [0x00000000, 0xFFFFFF0, 0xFFFFFFF, 0XFFFFFF7, 0xFFFFFF8, 0xFFFFFFF0]
+    if n in eoc_sign:
+        return []
+    
+    next_cluster = n
+    chain = [next_cluster]
+
+    while True:
+        # Phần tử FAT 2 ứng với cluster số 1
+        #next_cluster = read_number_buffer(fat_table_buffer, next_cluster * 4, 4)
+        next_cluster = read_value_from_offset(fat_table_buffer, next_cluster * 4, '<I')
+        if next_cluster in eoc_sign:
+            break 
+        else:
+            chain.append(next_cluster)
+    return chain 
+    
+def cluster_chain_to_sector_chain(info, cluster_chain) -> list: 
+    """
+    Hàm chuyển dãy các cluster sang dãy các sector
+    Biết rằng 1 cluster có Sc sectors 
+    Với cluster k thì nó bắt đầu chiếm từ cluster thứ `data_begin_sector + k * Sc`, và chiếm Sc sectors
+    """
+    sector_chain = []
+    #sb+nf*sf
+    data_begin_sector = info["Reserved Boot Sectors"] + info["Number of FATs"] * info["Sectors per FAT"]
+    sc = info["Sectors per Cluster"]
+    
+    for cluster in cluster_chain:
+        begin_sector = data_begin_sector + (cluster - 2) * sc
+        for sector in range(begin_sector, begin_sector + sc):
+            sector_chain.append(sector)
+    return sector_chain
+
 #Hàm in chuỗi các entry ra
-def print_directory_entry(disk_file, info, start_pos, is_sdet=False):
+def print_directory_entry(disk_file, info, start_pos, fat,is_sdet=False):
     """
     disk_file: nội dung của ổ đĩa dưới dạng file nhị phân
     info: dictionary chứa thông tin bootsector
@@ -93,12 +133,17 @@ def print_directory_entry(disk_file, info, start_pos, is_sdet=False):
                 
                 file_attributes = get_file_attributes(data[ME_STATE])
                 
-                cluster_number = struct.unpack_from('<H', data, ME_LOW_WORD)[0] + (struct.unpack_from('<H', data, ME_HIGH_WORD)[0] << 16)
+                #cluster_number = struct.unpack_from('<H', data, ME_LOW_WORD)[0] + (struct.unpack_from('<H', data, ME_HIGH_WORD)[0] << 16)
+                cluster_number = struct.unpack_from('<H', data, ME_LOW_WORD)[0]
+
                 file_size = struct.unpack_from('<I', data, ME_CONTENT_SIZE)[0]
                 
-                sector_number = start_pos // info["Sector Size"] + cluster_number - 2 * info["Sectors per Cluster"]
-                
-                table_data.append([file_name, file_attributes, cluster_number, sector_number])
+                #sector_number = start_pos // info["Sector Size"] + cluster_number - 2 * info["Sectors per Cluster"]
+
+                cl_list = read_cluster_chain(fat,cluster_number)
+                sector_number = cluster_chain_to_sector_chain(info,cl_list)
+
+                table_data.append([file_name, file_attributes, sector_number,file_size])
 
                 directories.append({
                     "name": file_name,
@@ -112,7 +157,7 @@ def print_directory_entry(disk_file, info, start_pos, is_sdet=False):
 
         # Đọc entry tiếp theo
         data = disk_file.read(32)
-    print(tabulate(table_data, headers=["File Name", "File Attributes", "First Cluster Number", "Sector Number on Hard Disk"]))
+    print(tabulate(table_data, headers=["File Name", "File Attributes","Sector Number on Hard Disk", "Size"]))
     return directories
 
 # Hàm này để xử lý file, nếu file là ".txt" thì sẽ đọc ra nội dung file, còn nếu là các loại file khác mà nằm trong "DOCUMENT_EXTENSIONS" thì sẽ in ra loại ứng dụng hỗ trợ đọc, còn không thì sẽ thông báo không hỗ trợ
@@ -133,7 +178,16 @@ def handle_file(disk_file, file_info, info):
         if file_extension in DOCUMENT_EXTENSIONS:
             print(f"The file {file_name} is supported by {DOCUMENT_EXTENSIONS[file_extension]}\n")
         else:
-            print(f"The file {file_name} is not supported in this program")            
+            print(f"The file {file_name} is not supported in this program")  
+
+def getFatTable(file, sb, sf):
+    # Seek to the specified offset
+    file.seek(sb)
+    
+    # Read the FAT data of size 'sf' bytes
+    fat = file.read(sf)
+    
+    return fat
 
 def main_FAT32(volume,disk_file):
 
@@ -152,13 +206,14 @@ def main_FAT32(volume,disk_file):
 
     # Tạo từ điển để theo dõi thư mục cha của từng thư mục
     parent_directories = {rdet_start: None}
+    fat = getFatTable(disk_file, info['Reserved Boot Sectors'], info['Sectors per FAT'])
 
     while True:
         # In đường dẫn thư mục hiện tại
         print("Current path: " + "\\".join(current_path))
 
         # Hiển thị danh sách thư mục và tệp trong thư mục hiện tại
-        directories = print_directory_entry(disk_file, info, current_directory, current_directory != rdet_start)
+        directories = print_directory_entry(disk_file, info, current_directory, fat ,current_directory != rdet_start)
 
         # Nhập tên thư mục để duyệt hoặc '..' để quay lại thư mục cha hoặc 'exit' để thoát
         dir_name = input("\n\nEnter a directory name to explore or '..' to go back or 'exit' to quit: ") + "\x00"
