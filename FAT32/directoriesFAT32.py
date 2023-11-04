@@ -49,6 +49,9 @@ def read_boot_sector_values(data):
 
     return values
 
+def print_boot_sector_values(values):
+    for key, value in values.items():
+        print(f"{key}: {value}")
 
 def read_cluster_chain(fat_table_buffer, n): 
     """
@@ -63,8 +66,7 @@ def read_cluster_chain(fat_table_buffer, n):
     chain = [next_cluster]
 
     while True:
-        # Phần tử FAT 2 ứng với cluster số 1
-        #next_cluster = read_number_buffer(fat_table_buffer, next_cluster * 4, 4)
+        #Đọc nội dung của cluster
         next_cluster = read_value_from_offset(fat_table_buffer, next_cluster * 4, '<I')
         if next_cluster in eoc_sign:
             break 
@@ -134,7 +136,7 @@ def print_directory_entry(disk_file, info, start_pos, fat,is_sdet=False):
                 file_attributes = get_file_attributes(data[ME_STATE])
                 
                 #cluster_number = struct.unpack_from('<H', data, ME_LOW_WORD)[0] + (struct.unpack_from('<H', data, ME_HIGH_WORD)[0] << 16)
-                cluster_number = struct.unpack_from('<H', data, ME_LOW_WORD)[0]
+                cluster_number = struct.unpack_from('<H', data, ME_CLUSTER_START)[0]
 
                 file_size = struct.unpack_from('<I', data, ME_CONTENT_SIZE)[0]
                 
@@ -197,6 +199,9 @@ def main_FAT32(volume,disk_file):
     # Đọc thông tin từ phần khởi đầu (boot sector) của ổ đĩa
     data_first512byte = disk_file.read(512)
     info = read_boot_sector_values(data_first512byte)
+
+    print_boot_sector_values(info)
+    print("\n")
 
     # Tính vị trí bắt đầu của phân mục gốc (Root Directory Entry Table - RDET)
     rdet_start = (info["Reserved Boot Sectors"] + info["Number of FATs"] * info["Sectors per FAT"]) * info["Sector Size"]
