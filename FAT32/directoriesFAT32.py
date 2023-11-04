@@ -101,6 +101,7 @@ def print_directory_entry(disk_file, info, start_pos, is_sdet=False):
     print(tabulate(table_data, headers=["File Name", "File Attributes", "First Cluster Number", "Sector Number on Hard Disk"]))
     return directories
 
+# Hàm này để xử lý file, nếu file là ".txt" thì sẽ đọc ra nội dung file, còn nếu là các loại file khác mà nằm trong "DOCUMENT_EXTENSIONS" thì sẽ in ra loại ứng dụng hỗ trợ đọc, còn không thì sẽ thông báo không hỗ trợ
 def handle_file(disk_file, file_info, info):
     # Tính toán vị trí bắt đầu của tệp
     txt_start = (info["Reserved Boot Sectors"] + info["Number of FATs"] * info["Sectors per FAT"] + (file_info['cluster_number'] - 2) * info["Sectors per Cluster"]) * info["Sector Size"]
