@@ -17,7 +17,7 @@ def print_hexa(data):
 #Luồng chính của chương trình
 try:
     platform_name = init_platform()
-    volume = input('Type your disk path: ')
+    volume = input('Type your disk name (C,D,F,...): ')
     rs = get_volume_type(volume) #Lưu chuỗi trả về "NTFS" hoặc "FAT32"
 
     # Chọn đúng đường dẫn ổ đĩa dựa trên hệ điều hành
@@ -29,7 +29,7 @@ try:
     if rs == 'FAT32':
         main_FAT32(volume, disk_file)
     elif rs == 'NTFS':
-       read_entry_info(volume)
+        read_entry_info(disk_path)
         
 #Xủ lý các lỗi có thể xảy ra        
 except Exception as e:
