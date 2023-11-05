@@ -165,22 +165,38 @@ def print_directory_entry(disk_file, info, start_pos, fat,is_sdet=False):
 # Hàm này để xử lý file, nếu file là ".txt" thì sẽ đọc ra nội dung file, còn nếu là các loại file khác mà nằm trong "DOCUMENT_EXTENSIONS" thì sẽ in ra loại ứng dụng hỗ trợ đọc, còn không thì sẽ thông báo không hỗ trợ
 def handle_file(disk_file, file_info, info):
     # Tính toán vị trí bắt đầu của tệp
-    txt_start = (info["Reserved Boot Sectors"] + info["Number of FATs"] * info["Sectors per FAT"] + (file_info['cluster_number'] - 2) * info["Sectors per Cluster"]) * info["Sector Size"]
-    # Di chuyển đến vị trí bắt đầu của tệp
-    disk_file.seek(txt_start)
-    # Đọc dữ liệu của tệp
-    file_data = disk_file.read(file_info['size'])
+    file_start = (info["Reserved Boot Sectors"] + info["Number of FATs"] * info["Sectors per FAT"] + 
+                 (file_info['cluster_number'] - 2) * info["Sectors per Cluster"]) * info["Sector Size"]
+    
+    # Tính toán vị trí bắt đầu của tệp
+    disk_file.seek(file_start)
 
     file_name = file_info['name'].rstrip('\x00')
+
+    # Xử lý file có đuôi .txt
     if file_name.lower().endswith('.txt'):
-        # Giải mã và in nội dung của tệp văn bản
-        print(f"The content of file {file_name}: ", file_data.decode('utf-8', 'ignore'))  #  Đảm bảo sử dụng mã hóa đúng
+        # Xử lý file quá dài
+        chunk_size = 4096 
+        file_size = file_info['size']
+
+        while file_size > 0:
+            chunk = disk_file.read(min(chunk_size, file_size))
+            if not chunk:
+                break
+
+            decoded_content = chunk.decode('utf-8', 'ignore')
+            # Giải mã và in nội dung của tệp văn bản
+            print(f"The content of file {file_name}:", decoded_content, end="")
+            file_size -= len(chunk)
+            
+    # Xử lý các file không phải loại txt
     else:
         file_extension = '.' + file_name.split('.')[-1]
         if file_extension in DOCUMENT_EXTENSIONS:
             print(f"The file {file_name} is supported by {DOCUMENT_EXTENSIONS[file_extension]}\n")
         else:
-            print(f"The file {file_name} is not supported in this program")  
+            print(f"The file {file_name} is not supported in this program")
+
 
 def getFatTable(file, sb, sf):
     # Seek to the specified offset
