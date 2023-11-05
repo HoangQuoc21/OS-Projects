@@ -29,10 +29,7 @@ try:
     if rs == 'FAT32':
         main_FAT32(volume, disk_file)
     elif rs == 'NTFS':
-        #in kết quả thử
-        data = disk_file.read(10000)
-        print_hexa(data)
-        #khi có các hàm xử lý cho NTFS thì xóa 2 dòng trên đi và ghi lại các hàm xử lý NTFS vào
+       read_entry_info(volume)
         
 #Xủ lý các lỗi có thể xảy ra        
 except Exception as e:
