@@ -78,7 +78,7 @@ def cluster_chain_to_sector_chain(info, cluster_chain) -> list:
     """
     Hàm chuyển dãy các cluster sang dãy các sector
     Biết rằng 1 cluster có Sc sectors 
-    Với cluster k thì nó bắt đầu chiếm từ cluster thứ `data_begin_sector + k * Sc`, và chiếm Sc sectors
+    Với cluster k thì nó bắt đầu chiếm từ sector thứ `data_begin_sector + k * Sc`, và chiếm Sc sectors
     """
     sector_chain = []
     #sb+nf*sf
