@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta
-from NTFS.constant_NTFS import DOCUMENT_EXTENSIONS
+from NTFS.constant_NTFS import *
 
 FILE_NAME = 48
 EPOCH_AS_FILETIME = 116444736000000000  # January 1, 1970 as MS file time

@@ -1,3 +1,5 @@
+#constant NTFS
+
 # File Extensions to Applications
 DOCUMENT_EXTENSIONS = {
     '.jpeg': 'Photos',
