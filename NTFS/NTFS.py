@@ -1,10 +1,11 @@
 import os
 from datetime import datetime, timedelta
-from constant_NTFS import DOCUMENT_EXTENSIONS
+from NTFS.constant_NTFS import DOCUMENT_EXTENSIONS
 
 FILE_NAME = 48
 EPOCH_AS_FILETIME = 116444736000000000  # January 1, 1970 as MS file time
 
+#Hàm đổi số nano giây ra ngày giờ
 def filetime_to_dt(ft):
     '''
          Đổi số nano giây ra ngày giờ
@@ -12,15 +13,7 @@ def filetime_to_dt(ft):
     us = (ft - EPOCH_AS_FILETIME) // 10
     return datetime(1970, 1, 1) + timedelta(microseconds=us)
 
-def dec(hex: str) -> int: 
-    """
-    Hàm đổi số hex ra số hệ thập phân (tham số nhận vào là chuỗi)
-    Vd:
-    >>> dec('0B')
-    >>> dec('0C')
-    """
-    return int(hex, 16)
-
+#Hàm đọc sector từ file
 def read_sectors(file, sector_begin, n_sector=1, bps=512) -> bytes:
     """
     Hàm đọc `n_sector` sectors, bắt đầu tại sector có chỉ số `sector_begin`.
@@ -33,6 +26,7 @@ def read_sectors(file, sector_begin, n_sector=1, bps=512) -> bytes:
     file.seek(bps * sector_begin)
     return file.read(bps * n_sector)
 
+#Hàm đọc chuỗi từ buffer
 def read_bytes_buffer(buffer, offset, size=1) -> bytes:
     """
     Hàm đọc chuỗi từ buffer tại vị trí `offset` với kích thước `size`.
@@ -45,6 +39,7 @@ def read_bytes_buffer(buffer, offset, size=1) -> bytes:
         
     return buffer[offset:offset+size]
 
+#Hàm đọc số nguyên không dấu từ buffer 
 def read_number_buffer(buffer, offset, size) -> int:
     """
     Hàm đọc số nguyên không dấu từ buffer tại vị trí `offset` với kích thước `size`.
@@ -55,9 +50,10 @@ def read_number_buffer(buffer, offset, size) -> int:
     Cách dùng tương tự `read_string_buffer`
     """
     buffer = read_bytes_buffer(buffer, offset, size)
-    return dec(buffer[::-1].hex())
+    return hex_to_dec(buffer[::-1].hex())
 
 
+#Hàm đọc một dãy các sector từ mảng
 def read_sector_chain(file_object, sector_list, bps=512):
     """
     Hàm đọc một dãy các sector từ mảng.
@@ -69,10 +65,11 @@ def read_sector_chain(file_object, sector_list, bps=512):
     return buffer
 
 
-
+#Hàm đổi hệ 16 sang hệ 10
 def hex_to_dec(hex_string):
     return int(hex_string, 16)
 
+#Hàm đọc thông tin ổ đĩa NTFS
 def read_ntfs_volume(f):
     # with open(volume_path, 'rb') as f:
         # Đọc NTFS patrition boot sector 
@@ -112,7 +109,7 @@ def read_ntfs_volume(f):
         #return mft, bytes_per_sector, sectors_per_cluster, reserved_sectors, total_sectors
         return bytes_per_sector, mft, mft_begin, total_sectors, sectors_per_cluster
 
-
+#Hàm đổi danh sách các cluster thành danh sách các sector
 def clusterChainToSectors(sectors_per_cluster, clusterChain):
     # Hàm đổi danh sách các cluster thành danh sách các sector
     sectors = []
@@ -122,6 +119,7 @@ def clusterChainToSectors(sectors_per_cluster, clusterChain):
     return sectors
 
 
+#hàm đọc thông tin entry
 def read_entry_info(volume_path):
     with open(volume_path, 'rb') as f:
         bytes_per_sector, mft, mft_begin, total_sectors, sectors_per_cluster = read_ntfs_volume(f)
