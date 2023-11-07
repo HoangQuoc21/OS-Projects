@@ -1,23 +1,7 @@
-import os
 from FAT32.constant_FAT32 import *
 import struct
+from FAT32.tree import *
 from tabulate import tabulate
-
-def get_file_attributes(hex_code):
-    # Định nghĩa các thuộc tính
-    attributes = {
-        0: 'Read-only',
-        1: 'Hidden',
-        2: 'System',
-        3: 'Volume label',
-        4: 'Subdirectory',
-        5: 'Archive',
-        6: 'Device',
-        7: 'Unused'
-    }
-    
-    # Trả về danh sách các thuộc tính tương ứng
-    return [attr for code, attr in attributes.items() if (hex_code >> code) & 1]
 
 #data: đọc dữ liệu từ file nhị phân (Data), bắt đầu từ [offset], và lưu kết quả theo [format_string]
 def read_value_from_offset(data, offset, format_string):
@@ -92,7 +76,7 @@ def cluster_chain_to_sector_chain(info, cluster_chain) -> list:
     return sector_chain
 
 #Hàm in chuỗi các entry ra
-def print_directory_entry(disk_file, info, start_pos, fat,is_sdet=False):
+def print_directory_entry(disk_file, info, start_pos, fat, is_sdet=False):
     """
     disk_file: nội dung của ổ đĩa dưới dạng file nhị phân
     info: dictionary chứa thông tin bootsector
@@ -119,7 +103,7 @@ def print_directory_entry(disk_file, info, start_pos, fat,is_sdet=False):
     table_data = []
     while data[0] != 0x00: #Chạy tới khi nào không gặp entry trống
         # Nếu là entry phụ (0F)
-        if data[0xB] == 0x0F:
+        if data[0xB] == 0x0F  and data[0] != 0xE5:
             # Rút tên từ các vị trí đã nói trước ra tới khi đủ số byte hoặc găp FF
             name_part_a = data[1:1+10].decode('utf-16-le', 'ignore').split('\uffff')[0]
             name_part_b = data[0xE:0xE+12].decode('utf-16-le', 'ignore').split('\uffff')[0]
@@ -135,13 +119,10 @@ def print_directory_entry(disk_file, info, start_pos, fat,is_sdet=False):
                 
                 file_attributes = get_file_attributes(data[ME_STATE])
                 
-                #cluster_number = struct.unpack_from('<H', data, ME_LOW_WORD)[0] + (struct.unpack_from('<H', data, ME_HIGH_WORD)[0] << 16)
                 cluster_number = struct.unpack_from('<H', data, ME_CLUSTER_START)[0]
 
                 file_size = struct.unpack_from('<I', data, ME_CONTENT_SIZE)[0]
                 
-                #sector_number = start_pos // info["Sector Size"] + cluster_number - 2 * info["Sectors per Cluster"]
-
                 cl_list = read_cluster_chain(fat,cluster_number)
                 sector_number = cluster_chain_to_sector_chain(info,cl_list)
 
@@ -159,7 +140,7 @@ def print_directory_entry(disk_file, info, start_pos, fat,is_sdet=False):
 
         # Đọc entry tiếp theo
         data = disk_file.read(32)
-    print(tabulate(table_data, headers=["File Name", "File Attributes","Sector Number on Hard Disk", "Size"]))
+    print(tabulate(table_data, headers=["File Name", "File Attributes","Sector Number ", "Size"]))
     return directories
 
 # Hàm này để xử lý file, nếu file là ".txt" thì sẽ đọc ra nội dung file, còn nếu là các loại file khác mà nằm trong "DOCUMENT_EXTENSIONS" thì sẽ in ra loại ứng dụng hỗ trợ đọc, còn không thì sẽ thông báo không hỗ trợ
@@ -212,10 +193,14 @@ def main_FAT32(volume,disk_file):
     # Tạo từ điển để theo dõi thư mục cha của từng thư mục
     parent_directories = {rdet_start: None}
     fat = getFatTable(disk_file, info['Reserved Boot Sectors'], info['Sectors per FAT'])
+    
+    print("============================ Root directory ================================")
+    print_tree_root(disk_file, info)
+    print("=========================================================================\n")
 
     while True:
         # In đường dẫn thư mục hiện tại
-        print("Current path: " + "\\".join(current_path))
+        print("\n\n ***Current path: " + "\\".join(current_path))
 
         # Hiển thị danh sách thư mục và tệp trong thư mục hiện tại
         directories = print_directory_entry(disk_file, info, current_directory, fat ,current_directory != rdet_start)
@@ -226,23 +211,31 @@ def main_FAT32(volume,disk_file):
         if dir_name.lower() == 'exit\x00':
             break
         elif dir_name == '..\x00':
-            if parent_directories[current_directory] is not None:
+            if parent_directories[current_directory] is not None: #NẾu cha của thư mục hiện tại không phải rỗng
                 current_directory = parent_directories[current_directory]
                 # Cập nhật đường dẫn khi quay lại thư mục cha
                 current_path.pop()
             continue
         else:
+            count = 0
             for directory in directories:
                 if directory['name'] == dir_name:
                     if 'Archive' in directory['type']:
                         # Xử lý tệp nếu là tệp dữ liệu
                         handle_file(disk_file, directory, info)
-                    else:
+
+                    elif 'Subdirectory' in directory['type'] :
                         sdet_start = (info["Reserved Boot Sectors"] + info["Number of FATs"] * info["Sectors per FAT"] + (directory['cluster_number'] - 2) * info["Sectors per Cluster"]) * info["Sector Size"]
                         parent_directories[sdet_start] = current_directory
                         current_directory = sdet_start
+
                         # Cập nhật đường dẫn khi chuyển đến thư mục con
                         current_path.append(dir_name.rstrip('\x00'))
+                        print_tree_directory(disk_file,info,current_directory)
+                        print("\n")
                     break
+
+            if count == len(directories):
+                print("File not exists")
 
     print("Finished")
