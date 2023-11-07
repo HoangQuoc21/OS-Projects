@@ -31,6 +31,6 @@ try:
     elif rs == 'NTFS':
         read_entry_info(disk_path)
         
-#Xủ lý các lỗi có thể xảy ra        
+#Hiển thị ngoại lệ lỗi        
 except Exception as e:
     print(f"Error: {e.args}")
