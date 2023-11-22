@@ -48,16 +48,92 @@
 //	are in machine.h.
 //----------------------------------------------------------------------
 
+void IncreasePC() {
+	int pcAfter = machine->ReadRegister(NextPCReg) + 4;
+	machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+	machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+	machine->WriteRegister(NextPCReg, pcAfter);
+}
+/*add syscall handlers*/
+void HandleReadInt() {
+	/*int: [-2147483648 , 2147483647] --> max length = 11*/
+	const int maxlen = 11;
+	char num_string[maxlen] = { 0 };
+	long long ret = 0;
+	for (int i = 0; i < maxlen; i++) {
+		char c = 0;
+		gSynchConsole->Read(&c, 1);
+		if (c >= '0' && c <= '9') num_string[i] = c;
+		else if (i == 0 && c == '-') num_string[i] = c;
+		else break;
+	}
+	int i = (num_string[0] == '-') ? 1 : 0;
+	while (i < maxlen && num_string[i] >= '0' && num_string[i] <= '9')
+		ret = ret * 10 + num_string[i++] - '0';
+	ret = (num_string[0] == '-') ? (-ret) : ret;
+	machine->WriteRegister(2, (int)ret);
+}
+void HandlePrintInt() {
+	int n = machine->ReadRegister(4);
+	/*int: [-2147483648 , 2147483647] --> max length = 11*/
+	const int maxlen = 11;
+	char num_string[maxlen] = { 0 };
+	int tmp[maxlen] = { 0 }, i = 0, j = 0;
+	if (n < 0) {
+		n = -n;
+		num_string[i++] = '-';
+	}
+	do {
+		tmp[j++] = n % 10;
+		n /= 10;
+	} while (n);
+	while (j)
+		num_string[i++] = '0' + (char)tmp[--j];
+	gSynchConsole->Write(num_string, i);
+	machine->WriteRegister(2, 0);
+}
 void
 ExceptionHandler(ExceptionType which)
 {
-    int type = machine->ReadRegister(2);
+	int type = machine->ReadRegister(2);
+	switch (which) {
+	case NoException:
+		return;
+	case SyscallException:
+		switch (type) {
+		case SC_Halt:
+			DEBUG('a', "Shutdown, initiated by user program.\n");
+			interrupt->Halt();
+		case SC_ReadInt:
+			HandleReadInt();
+			IncreasePC();
+			break;
+		case SC_PrintInt:
+			HandlePrintInt();
+			IncreasePC;
+			break;
+		}
 
-    if ((which == SyscallException) && (type == SC_Halt)) {
-	DEBUG('a', "Shutdown, initiated by user program.\n");
-   	interrupt->Halt();
-    } else {
-	printf("Unexpected user mode exception %d %d\n", which, type);
-	ASSERT(FALSE);
-    }
+
+		break;
+
+	case PageFaultException:
+		DEBUG('a', "No valid translation found.\n");
+		printf("No valid translation found.\n");
+		interrupt->Halt();
+		break;
+	case ReadOnlyException:
+		DEBUG('a', "Write attempted to page marked \"read - only\".\n");
+		printf("Write attempted to page marked \"read-only\".\n");
+		interrupt->Halt();
+		break;
+	case BusErrorException:
+		DEBUG('a', "Translation resulted in an invalid physical address.\n");
+		printf("Translation resulted in an invalid physical address.\n");
+		interrupt->Halt();
+		break;
+	default:
+		printf("Unexpected user mode exception %d %d\n", which, type);
+		ASSERT(FALSE);
+	}
 }
