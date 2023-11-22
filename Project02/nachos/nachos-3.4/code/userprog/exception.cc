@@ -92,11 +92,11 @@ void HandlePrintInt() {
 	gSynchConsole->Write(num_string, i);
 	machine->WriteRegister(2, 0);
 }
-void
-ExceptionHandler(ExceptionType which)
+void ExceptionHandler(ExceptionType which)
 {
 	int type = machine->ReadRegister(2);
 	switch (which) {
+
 	case NoException:
 		return;
 	case SyscallException:
@@ -113,15 +113,13 @@ ExceptionHandler(ExceptionType which)
 			IncreasePC;
 			break;
 		}
-
-
 		break;
-
 	case PageFaultException:
 		DEBUG('a', "No valid translation found.\n");
 		printf("No valid translation found.\n");
 		interrupt->Halt();
 		break;
+
 	case ReadOnlyException:
 		DEBUG('a', "Write attempted to page marked \"read - only\".\n");
 		printf("Write attempted to page marked \"read-only\".\n");
@@ -132,6 +130,28 @@ ExceptionHandler(ExceptionType which)
 		printf("Translation resulted in an invalid physical address.\n");
 		interrupt->Halt();
 		break;
+	// ========= Added by Quoc =============
+	case AddressErrorException:
+		DEBUG('a', "Unaligned reference or one that was beyond the end of the address space.\n");
+		printf("Unaligned reference or one that was beyond the end of the address space.\n");
+		interrupt->Halt();
+		break;
+	case OverflowException:
+		DEBUG('a', "Integer overflow in add or sub.\n");
+		printf("Integer overflow in add or sub.\n");
+		interrupt->Halt();
+		break;
+	case IllegalInstrException:
+		DEBUG('a', "Unimplemented or reserved instr.\n");
+		printf("Unimplemented or reserved instr.\n");
+		interrupt->Halt();
+		break;
+	case NumExceptionTypes:
+		DEBUG('a', "NumExceptionTypes.\n");
+		printf("NumExceptionTypes.\n");
+		interrupt->Halt();
+		break;
+	// =====================================
 	default:
 		printf("Unexpected user mode exception %d %d\n", which, type);
 		ASSERT(FALSE);
