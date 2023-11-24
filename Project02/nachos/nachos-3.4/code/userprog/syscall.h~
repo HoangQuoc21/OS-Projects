@@ -51,7 +51,6 @@
 // Code we define
 int ReadInt();
 void PrintInt(int number);
-
 char ReadChar();
 void PrintChar(char c);
 /* Stop Nachos, and print out performance stats */

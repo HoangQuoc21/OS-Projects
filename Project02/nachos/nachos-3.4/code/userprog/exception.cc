@@ -1,4 +1,4 @@
-// exception.cc 
+// exception.cc
 //	Entry point into the Nachos kernel from user programs.
 //	There are two kinds of things that can cause control to
 //	transfer back to here from user code:
@@ -9,7 +9,7 @@
 //
 //	exceptions -- The user code does something that the CPU can't handle.
 //	For instance, accessing memory that doesn't exist, arithmetic errors,
-//	etc.  
+//	etc.
 //
 //	Interrupts (which can also cause control to transfer from user
 //	code into the Nachos kernel) are handled elsewhere.
@@ -18,7 +18,7 @@
 // Everything else core dumps.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
@@ -39,33 +39,39 @@
 //		arg3 -- r6
 //		arg4 -- r7
 //
-//	The result of the system call, if any, must be put back into r2. 
+//	The result of the system call, if any, must be put back into r2.
 //
 // And don't forget to increment the pc before returning. (Or else you'll
 // loop making the same system call forever!
 //
-//	"which" is the kind of exception.  The list of possible exceptions 
+//	"which" is the kind of exception.  The list of possible exceptions
 //	are in machine.h.
 //----------------------------------------------------------------------
 
-void IncreasePC() {
+void IncreasePC()
+{
 	int pcAfter = machine->ReadRegister(NextPCReg) + 4;
 	machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
 	machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
 	machine->WriteRegister(NextPCReg, pcAfter);
 }
 /*add syscall handlers*/
-void HandleReadInt() {
+void HandleReadInt()
+{
 	/*int: [-2147483648 , 2147483647] --> max length = 11*/
 	const int maxlen = 11;
-	char num_string[maxlen] = { 0 };
+	char num_string[maxlen] = {0};
 	long long ret = 0;
-	for (int i = 0; i < maxlen; i++) {
+	for (int i = 0; i < maxlen; i++)
+	{
 		char c = 0;
 		gSynchConsole->Read(&c, 1);
-		if (c >= '0' && c <= '9') num_string[i] = c;
-		else if (i == 0 && c == '-') num_string[i] = c;
-		else break;
+		if (c >= '0' && c <= '9')
+			num_string[i] = c;
+		else if (i == 0 && c == '-')
+			num_string[i] = c;
+		else
+			break;
 	}
 	int i = (num_string[0] == '-') ? 1 : 0;
 	while (i < maxlen && num_string[i] >= '0' && num_string[i] <= '9')
@@ -73,17 +79,20 @@ void HandleReadInt() {
 	ret = (num_string[0] == '-') ? (-ret) : ret;
 	machine->WriteRegister(2, (int)ret);
 }
-void HandlePrintInt() {
+void HandlePrintInt()
+{
 	int n = machine->ReadRegister(4);
 	/*int: [-2147483648 , 2147483647] --> max length = 11*/
 	const int maxlen = 11;
-	char num_string[maxlen] = { 0 };
-	int tmp[maxlen] = { 0 }, i = 0, j = 0;
-	if (n < 0) {
+	char num_string[maxlen] = {0};
+	int tmp[maxlen] = {0}, i = 0, j = 0;
+	if (n < 0)
+	{
 		n = -n;
 		num_string[i++] = '-';
 	}
-	do {
+	do
+	{
 		tmp[j++] = n % 10;
 		n /= 10;
 	} while (n);
@@ -92,15 +101,55 @@ void HandlePrintInt() {
 	gSynchConsole->Write(num_string, i);
 	machine->WriteRegister(2, 0);
 }
-void
-ExceptionHandler(ExceptionType which)
+
+void HandleReadChar()
+{
+	int maxBytes = 255;
+	char *buffer = new char[255];
+	int numBytes = gSynchConsole->Read(buffer, maxBytes);
+
+	if (numBytes > 1) // unvalid if input more than 1 character
+	{
+		printf("INPUT ONLY 1 character !!!");
+		DEBUG('a', "\nERROR: INPUT ONLY 1 character !!!");
+		machine->WriteRegister(2, 0);
+	}
+	else if (numBytes == 0) // null character
+	{
+		printf("NULL character !!!");
+		DEBUG('a', "\nERROR: NULL character !!!");
+		machine->WriteRegister(2, 0);
+	}
+	else
+	{
+		// gotten string has only 1 char, get the char at index = 0,
+		  // return it to reg2
+		char c = buffer[0];
+		machine->WriteRegister(2, c);
+	}
+
+	delete buffer;
+}
+
+void HandlePrintChar()
+{
+	// get the char from reg4
+	char c = (char)machine->ReadRegister(4);
+
+	// print the char
+	gSynchConsole->Write(&c, 1);
+}
+
+void ExceptionHandler(ExceptionType which)
 {
 	int type = machine->ReadRegister(2);
-	switch (which) {
+	switch (which)
+	{
 	case NoException:
 		return;
 	case SyscallException:
-		switch (type) {
+		switch (type)
+		{
 		case SC_Halt:
 			DEBUG('a', "Shutdown, initiated by user program.\n");
 			interrupt->Halt();
@@ -110,12 +159,17 @@ ExceptionHandler(ExceptionType which)
 			break;
 		case SC_PrintInt:
 			HandlePrintInt();
-			IncreasePC;
+			IncreasePC();
+			break;
+		case SC_ReadChar:
+			HandleReadChar();
+			IncreasePC();
+			break;
+		case SC_PrintChar:
+			HandlePrintChar();
+			IncreasePC();
 			break;
 		}
-
-
-		break;
 
 	case PageFaultException:
 		DEBUG('a', "No valid translation found.\n");
