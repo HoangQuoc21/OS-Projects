@@ -147,6 +147,9 @@ PrintInt :
 		j	$31
 		.end PrintInt
 
+		.globl ReadChar
+		.ent ReadChar
+
 ReadChar:
 	addiu $2, $0, SC_ReadChar
 	syscall
