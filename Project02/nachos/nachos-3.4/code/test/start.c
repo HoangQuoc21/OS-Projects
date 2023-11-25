@@ -164,10 +164,26 @@ PrintChar:
 	j	$31
 	.end PrintChar
 
+	.globl ReadString
+	.ent ReadString
+
+ReadString:
+	addiu $2, $0, SC_ReadString
+	syscall
+	j	$31
+	.end ReadString
+
+	.globl PrintString
+	.ent PrintString
+PrintString:
+	addiu $2, $0, SC_PrintString
+	syscall
+	j	$31
+	.end PrintString
+
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main
 __main:
         j       $31
         .end    __main
-
