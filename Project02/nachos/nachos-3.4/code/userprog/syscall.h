@@ -35,6 +35,8 @@
 #define SC_PrintInt	12
 #define SC_ReadChar 13
 #define SC_PrintChar 14
+#define SC_ReadString	15
+#define SC_PrintString	16
 #ifndef IN_ASM
 
 /* The system call interface.  These are the operations the Nachos
@@ -54,6 +56,9 @@ void PrintInt(int number);
 
 char ReadChar();
 void PrintChar(char c);
+
+void ReadString(char buffer[], int length);
+void PrintString(char[] buffer);
 /* Stop Nachos, and print out performance stats */
 void Halt();		
  
