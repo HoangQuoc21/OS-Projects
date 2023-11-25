@@ -58,7 +58,7 @@ char ReadChar();
 void PrintChar(char c);
 
 void ReadString(char buffer[], int length);
-void PrintString(char[] buffer);
+void PrintString(char buffer[]);
 /* Stop Nachos, and print out performance stats */
 void Halt();		
  
