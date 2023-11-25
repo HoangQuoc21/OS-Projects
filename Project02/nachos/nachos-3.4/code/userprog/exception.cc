@@ -171,6 +171,7 @@ void ExceptionHandler(ExceptionType which)
 			break;
 		}
 
+		break;
 	case PageFaultException:
 		DEBUG('a', "No valid translation found.\n");
 		printf("No valid translation found.\n");
