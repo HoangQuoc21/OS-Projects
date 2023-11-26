@@ -35,7 +35,7 @@ CPP = gcc -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt shell matmult sort checkNachos readInt readChar readString bubbleSort
+all: halt shell matmult sort bubbleSort
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
@@ -66,29 +66,6 @@ matmult: matmult.o start.o
 	$(LD) $(LDFLAGS) start.o matmult.o -o matmult.coff
 	../bin/coff2noff matmult.coff matmult
 
-checkNachos.o: checkNachos.c
-	$(CC) $(CFLAGS) -c checkNachos.c
-checkNachos: checkNachos.o start.o
-	$(LD) $(LDFLAGS) start.o checkNachos.o -o checkNachos.coff
-	../bin/coff2noff checkNachos.coff checkNachos
-
-readInt.o: readInt.c
-	$(CC) $(CFLAGS) -c readInt.c
-readInt: readInt.o start.o
-	$(LD) $(LDFLAGS) start.o readInt.o -o readInt.coff
-	../bin/coff2noff readInt.coff readInt
-	
-readChar.o: readChar.c
-	$(CC) $(CFLAGS) -c readChar.c
-readChar: readChar.o start.o
-	$(LD) $(LDFLAGS) start.o readChar.o -o readChar.coff
-	../bin/coff2noff readChar.coff readChar
-
-readString.o: readString.c
-	$(CC) $(CFLAGS) -c readString.c
-readString: readString.o start.o
-	$(LD) $(LDFLAGS) start.o readString.o -o readString.coff
-	../bin/coff2noff readString.coff readString
 
 bubbleSort.o: bubbleSort.c
 	$(CC) $(CFLAGS) -c bubbleSort.c

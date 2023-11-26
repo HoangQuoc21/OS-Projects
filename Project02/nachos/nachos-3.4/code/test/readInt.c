@@ -1,8 +1,0 @@
-#include "syscall.h"
-int main() {
-	int num;
-	num = ReadInt();
-	PrintInt(num);
-	Halt();
-	return 0;
-}
