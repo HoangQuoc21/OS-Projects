@@ -3,7 +3,7 @@
 int main() {
 	int n, a[101], isAsc, temp, i, j;
 	do {	
-		PrintString("n: ");
+		PrintString("n (0 < n <= 100): ");
 		n = ReadInt();
 	} while (n <= 0 || n > 100);
 	for (i = 0; i < n; i++)
