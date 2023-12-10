@@ -140,6 +140,45 @@ void HandlePrintChar()
 	gSynchConsole->Write(&c, 1);
 }
 
+void HandleReadString() {
+    int buffer = machine->ReadRegister(4);
+    int length = machine->ReadRegister(5);
+    char *buf = NULL;
+    if (length > 0) {
+        buf = new char[length];
+        if (buf == NULL) {
+            char msg[] = "Not enough memory in system.\n";
+            gSynchConsole->Write(msg,strlen(msg));
+        }
+        else
+            memset(buf, 0, length);
+    }
+    if (buf != NULL) {
+        /*make sure string is null terminated*/
+        gSynchConsole->Read(buf,length-1);
+        int n = strlen(buf)+1;
+        for (int i = 0; i < n; i++) {
+            machine->WriteMem(buffer + i, 1, (int)buf[i]);
+        }
+        delete[] buf;
+    }	    
+    machine->WriteRegister(2, 0);
+}
+void HandlePrintString() {
+    int buffer = machine->ReadRegister(4), i = 0;
+    /*limit the length of strings to print both null and non-null terminated strings*/
+    const int maxlen = 256;
+    char s[maxlen] = {0};
+    while (i < maxlen) {
+        int oneChar = 0;
+        machine->ReadMem(buffer+i, 1, &oneChar);
+        if (oneChar == 0) break;
+        s[i++] = (char)oneChar;
+    }
+    gSynchConsole->Write(s,i);
+    machine->WriteRegister(2, 0);
+}
+
 void ExceptionHandler(ExceptionType which)
 {
 	int type = machine->ReadRegister(2);
@@ -169,8 +208,16 @@ void ExceptionHandler(ExceptionType which)
 			HandlePrintChar();
 			IncreasePC();
 			break;
+		case SC_ReadString:
+			HandleReadString();
+			IncreasePC();
+			break;
+		case SC_PrintString:
+			HandlePrintString();
+			IncreasePC();
+			break;
 		}
-		
+
 		break;
 	case PageFaultException:
 		DEBUG('a', "No valid translation found.\n");

@@ -1,0 +1,11 @@
+#include "syscall.h"
+
+int main(){
+	char string[50];
+	int length = 50;
+	PrintString("lam hoang quoc\n");
+	ReadString(string, length);
+	PrintString(string);
+	PrintChar('\n');
+	Halt();
+}
