@@ -1,2 +1,3 @@
 *.pyc
 Project01/
+*.o
