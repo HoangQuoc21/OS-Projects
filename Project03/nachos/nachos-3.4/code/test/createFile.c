@@ -1,29 +1,38 @@
 #include "syscall.h"
 
-int main()
-{
-    char data[] = "doi mat em nhu la bo cau, con dau, con bay, con bay, con dau";
+#define CONSOLE_INPUT 0
+#define CONSOLE_OUTPUT 1
+#define MAX_LENGTH 32
+
+int main() {
     char buffer[256];
-	SpaceId id_file;
-	int f_Success, bytes_read;
+    int openFileId;
+	int fileSize;
+	char c;
+	char fileName[MAX_LENGTH];
+	int i; //Index for loop
+	PrintString("\n\t\t\tHIEN THI NOI DUNG FILE\n\n");
+	PrintString("Nhap vao ten file can doc: ");
 	
-
-	f_Success = CreateFile("idkman.txt");
-	if(f_Success == -1)
-		return 1;
+	// read string file name
+	ReadString(fileName, MAX_LENGTH);
 	
-	id_file = Open("idkman.txt", 0);
-
-    
-	Write(data, strlen(data), id_file);
+    // open file
+	openFileId = Open(fileName, 1);
 	
-	Close(id_file);
-
-	id_file = Open("idkman.txt", 0);
-
-    bytes_read = Read(buffer, strlen(data), id_file); 
-    PrintString(buffer);
-    Close(id_file);
-
-    Halt();    
+	if (openFileId != -1) 
+	{
+		// read and save to buffer
+		Read(buffer,256, openFileId);
+        // print string
+		PrintString("Noi dung file:\n");
+		PrintString(buffer);
+		Close(openFileId); // Close file
+	}
+	else
+	{
+		PrintString("Khong the mo file!\n\n");
+	}
+	
+    Halt();
 }
