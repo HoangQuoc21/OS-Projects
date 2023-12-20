@@ -114,8 +114,16 @@ Close:
 	j	$31
 	.end Close
 
+	.globl Seek
+	.ent	Seek
+Seek:
+	addiu $2,$0,SC_Seek
+	syscall
+	j	$31
+	.end Seek
+
 	.globl Fork
-	.ent	Fork
+	.ent Fork
 Fork:
 	addiu $2,$0,SC_Fork
 	syscall

@@ -279,7 +279,7 @@ void ExceptionHandler(ExceptionType which)
 				printf("\n File name is not valid");
 				DEBUG('a', "\n File name is not valid");
 				machine->WriteRegister(2, -1); //Return -1 vao thanh ghi R2
-				//IncreasePC();
+				IncreasePC();
 				//return;
 				break;
 			}
@@ -290,7 +290,7 @@ void ExceptionHandler(ExceptionType which)
 				DEBUG('a', "\n Not enough memory in system");
 				machine->WriteRegister(2, -1); //Return -1 vao thanh ghi R2
 				delete filename;
-				//IncreasePC();
+				IncreasePC();
 				//return;
 				break;
 			}
@@ -302,7 +302,7 @@ void ExceptionHandler(ExceptionType which)
 				printf("\n Error create file '%s'", filename);
 				machine->WriteRegister(2, -1);
 				delete filename;
-				//IncreasePC();
+				IncreasePC();
 				//return;
 				break;
 			}
@@ -328,8 +328,8 @@ void ExceptionHandler(ExceptionType which)
 			char* filename;
 			filename = User2System(virtAddr, MaxFileLength); // Copy chuoi tu vung nho User Space sang System Space voi bo dem name dai MaxFileLength
 			//Kiem tra xem OS con mo dc file khong
+			DEBUG('a', "\n Opening file...");
 			
-			// update 4/1/2018
 			int freeSlot = fileSystem->FindFreeSlot();
 			if (freeSlot != -1) //Chi xu li khi con slot trong
 			{
@@ -350,6 +350,7 @@ void ExceptionHandler(ExceptionType which)
 					machine->WriteRegister(2, 1); //tra ve OpenFileID
 				}
 				delete[] filename;
+				IncreasePC();
 				break;
 			}
 			machine->WriteRegister(2, -1); //Khong mo duoc file return -1
