@@ -11,6 +11,13 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+/////////////////////////////////////////////////
+// 	DH KHTN - DHQG TPHCM			/
+// 	1512034 Nguyen Dang Binh		/
+// 	1512042 Nguyen Thanh Chung		/
+// 	1512123 Hoang Ngoc Duc			/
+/////////////////////////////////////////////////
+
 #include "copyright.h"
 #include "filehdr.h"
 #include "openfile.h"
@@ -32,6 +39,15 @@ OpenFile::OpenFile(int sector)
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
+}
+
+//Cai dat ham dung OpenFile voi them tham so type
+OpenFile::OpenFile(int sector, int _type)
+{
+	hdr = new FileHeader;
+	hdr->FetchFrom(sector);
+	seekPosition = 0;
+	type = _type;
 }
 
 //----------------------------------------------------------------------

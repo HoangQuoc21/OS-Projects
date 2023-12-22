@@ -114,6 +114,14 @@ Close:
 	j	$31
 	.end Close
 
+	.globl Seek
+	.ent	Seek
+Seek:
+	addiu $2,$0,SC_Seek
+	syscall
+	j	$31
+	.end Seek
+
 	.globl Fork
 	.ent	Fork
 Fork:
@@ -180,6 +188,30 @@ PrintString:
 	syscall
 	j	$31
 	.end PrintString
+
+	.globl CreateSemaphore
+	.ent	CreateSemaphore
+CreateSemaphore :
+	addiu $2, $0, SC_CreateSemaphore
+	syscall
+	j	$31
+	.end CreateSemaphore
+
+	.globl Down
+	.ent	Down
+Down :
+	addiu $2, $0, SC_Down
+	syscall
+	j	$31
+	.end Down
+
+	.globl Up
+	.ent	Up
+Up :
+	addiu $2, $0, SC_Up
+	syscall
+	j	$31
+	.end Up
 
 /* dummy function to keep gcc happy */
         .globl  __main

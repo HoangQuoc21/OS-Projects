@@ -18,23 +18,38 @@
 /* system call codes -- used by the stubs to tell the kernel which system call
  * is being asked for
  */
-#define SC_Halt		0
-#define SC_Exit		1
-#define SC_Exec		2
-#define SC_Join		3
-#define SC_Create	4
-#define SC_Open		5
-#define SC_Read		6
-#define SC_Write	7
-#define SC_Close	8
-#define SC_Fork		9
-#define SC_Yield	10
+#define SC_Halt			0
+
+//System call cho Thao tac
+#define SC_Exit			1
+#define SC_Exec			2
+#define SC_Join			3
+
+//Syscall cho thao tac tep tin
+#define SC_Create		4
+#define SC_Open			5
+#define SC_Read			6
+#define SC_Write		7
+#define SC_Close		8
+
+//Syscall cho multithreading
+#define SC_Fork			9
+#define SC_Yield		10
 
 //add syscall
-#define SC_ReadInt	11
-#define SC_PrintInt	12
-#define SC_ReadChar	13
-#define SC_PrintChar 	14
+#define SC_ReadInt		11
+#define SC_PrintInt		12
+#define SC_ReadChar 		13
+#define SC_PrintChar 		14
+#define SC_ReadString		15
+#define SC_PrintString		16
+#define SC_Seek 		17
+
+// Syscall Semaphore
+#define SC_CreateSemaphore	18
+#define SC_Down			19
+#define SC_Up		20
+
 #ifndef IN_ASM
 
 /* The system call interface.  These are the operations the Nachos
@@ -54,6 +69,20 @@ void PrintInt(int number);
 
 char ReadChar();
 void PrintChar(char c);
+
+void ReadString(char buffer[], int length);
+void PrintString(char buffer[]);
+
+// Ham cho semaphore
+// Success: 0 - Failed: -1
+// Ham tao 1 semaphore voi ten semaphore
+int CreateSemaphore(char* name, int semval);
+
+int Up(char* name);
+
+int Down(char* name);
+
+void Exit(int status);	
 /* Stop Nachos, and print out performance stats */
 void Halt();		
  
@@ -99,12 +128,12 @@ typedef int OpenFileId;
 #define ConsoleOutput	1  
  
 /* Create a Nachos file, with "name" */
-void Create(char *name);
+int Create(char *name);
 
 /* Open the Nachos file "name", and return an "OpenFileId" that can 
  * be used to read and write to the file.
  */
-OpenFileId Open(char *name);
+OpenFileId Open(char *name, int type);
 
 /* Write "size" bytes from "buffer" to the open file. */
 void Write(char *buffer, int size, OpenFileId id);
@@ -120,7 +149,7 @@ int Read(char *buffer, int size, OpenFileId id);
 /* Close the file, we're done reading and writing to it. */
 void Close(OpenFileId id);
 
-
+int Seek(int pos, OpenFileId id);
 
 /* User-level thread operations: Fork and Yield.  To allow multiple
  * threads to run within a user program. 
