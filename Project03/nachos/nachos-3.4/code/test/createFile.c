@@ -53,7 +53,7 @@ int main()
 	// PrintInt(openFileId);
 	fileSize = Seek(-1, openFileId);
 	// test write
-	Write(", het chan", 10, openFileId);
+	Write(", test chuc nang write file", 27, openFileId);
 
 	if (openFileId != -1) //Kiem tra Open co loi khong
 	{
